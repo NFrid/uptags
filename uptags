@@ -1,0 +1,71 @@
+#!/usr/bin/env python3
+
+import os
+import argparse
+import re
+import eyed3
+
+eyed3.log.setLevel("ERROR")
+
+num_delim = ". "
+year_delim = " - "
+
+parser = argparse.ArgumentParser(
+    description="automatically updating all the ID3 tags based on a file structure and stuff"
+)
+parser.add_argument(
+    "root_path", metavar="music_dir", type=str, help="path to the music directory"
+)
+
+args = parser.parse_args()
+
+mus_file_re = r".*\.mp3"
+
+os.chdir(os.path.expanduser(args.root_path))
+
+for root, _, files in os.walk("./"):
+    dir = os.path.normpath(root)
+    for file in files:
+        if re.match(mus_file_re, file):
+            song = eyed3.load(f"{dir}{os.sep}{file}")
+            if not song.tag:
+                song.initTag()
+            tag = song.tag
+
+            [genre, artist, *album] = dir.split(os.sep)
+            if len(album):
+                album = album[0]
+            else:
+                album = None
+
+            [*base, ext] = file.split(".")
+            title = ".".join(base)
+
+            num = None
+            title_pre = title.split(num_delim)
+            if len(title_pre) > 1:
+                num = title_pre[0]
+                title = num_delim.join(title_pre[1:])
+
+            year = None
+            if album:
+                album_year = album.split(year_delim)
+                if len(album_year) > 1:
+                    year = album_year[0]
+                    album = year_delim.join(album_year[1:])
+
+            tag.genre = genre
+            tag.artist = artist
+            if album:
+                tag.album = album
+            if year:
+                tag.year = year
+            if num:
+                tag.num = num
+
+            # TODO: update file/dir based by "same_name".txt file,
+            # using some cfg-like format to literally rewrite some tags
+
+            # TODO: image covers
+
+            tag.save()
