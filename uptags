@@ -4,8 +4,35 @@ import os
 import argparse
 import re
 import eyed3
+from PIL import Image
 
 eyed3.log.setLevel("ERROR")
+
+
+def set_img(tag, path: str):
+    with Image.open(path) as im:
+        mod = False
+        width, height = im.size
+        if width / height != 1:
+            size = min(width, height)
+            left = (width - size) / 2
+            top = (height - size) / 2
+            right = (width + size) / 2
+            bottom = (height + size) / 2
+            im = im.crop((left, top, right, bottom))
+            mod = True
+        if width > 600:
+            im = im.resize((600, 600))
+            mod = True
+        if im.format != "JPEG":
+            im = im.convert("RGB")
+            mod = True
+
+        if mod:
+            im.save(path, "JPEG")
+
+    tag.images.set(3, open(path, "rb").read(), "image/jpeg")
+
 
 num_delim = ". "
 year_delim = " - "
@@ -14,7 +41,12 @@ parser = argparse.ArgumentParser(
     description="automatically updating all the ID3 tags based on a file structure and stuff"
 )
 parser.add_argument(
-    "root_path", metavar="music_dir", type=str, help="path to the music directory"
+    "root_path",
+    metavar="music_dir",
+    type=str,
+    help="path to the music directory ('~/Music' by default)",
+    nargs="?",
+    default="~/Music",
 )
 
 args = parser.parse_args()
@@ -66,6 +98,26 @@ for root, _, files in os.walk("./"):
             # TODO: update file/dir based by "same_name".txt file,
             # using some cfg-like format to literally rewrite some tags
 
-            # TODO: image covers
+            is_numed = num != None
+
+            full_img = f"{dir}{os.sep}{num}{num_delim}{title}.jpg"
+            title_img = f"{dir}{os.sep}{title}.jpg"
+            num_img = f"{dir}{os.sep}{num}.jpg"
+            _img = f"{dir}{os.sep}_.jpg"
+            artist_img = f"{os.sep.join(dir.split(os.sep)[:-1])}{os.sep}_.jpg"
+            genre_img = f"{os.sep.join(dir.split(os.sep)[:-2])}{os.sep}_.jpg"
+
+            if os.path.isfile(full_img) and is_numed:
+                set_img(tag, full_img)
+            elif os.path.isfile(title_img):
+                set_img(tag, title_img)
+            elif os.path.isfile(num_img) and is_numed:
+                set_img(tag, num_img)
+            elif os.path.isfile(_img):
+                set_img(tag, _img)
+            elif os.path.isfile(artist_img):
+                set_img(tag, artist_img)
+            elif os.path.isfile(genre_img):
+                set_img(tag, genre_img)
 
             tag.save()
