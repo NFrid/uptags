@@ -1,0 +1,32 @@
+#+TITLE: Uptags
+
+* Uptags - update your ID3 tags
+Uptags is a somewhat simple python script that updates ID3 tags for mp3 files according to the file structure.
+
+Usage:
+=uptags *music dir*= (or w/out arguments to use default =~/Music=)
+
+** Features
+*** File structure tags
+=MUSIC_DIR/genre/artist/(album/)song=
+*** Album year
+=year - album/=
+*** Song number
+=number. song.mp3=
+*** Image cover (front)
+the priority:
+1. =number. song.jpg=
+2. =song.mp3=
+3. =number.mp3=
+4. =_.mp3= (for a whole album)
+4. =_.mp3= in an artist dir (for all his songs)
+
+Note that you don't have to have proper file type (jpeg) or resolution of 1x1 <= 600px, you just have to have any image file and name it with =.jpg=.
+The file will be automatically converted to proper format (!!! it'll be rewritten !!!)
+
+** Things to do
++ Year for a song in pattern "=(year) title.mp3="
++ File "=*name*.txt= / =_.txt=" where you can manually set tags for a song, an album, an artist, etc.
++ Other music file formats
++ Configurable rules and patterns
++ Configurable file structure
